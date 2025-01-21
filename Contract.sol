@@ -12,6 +12,30 @@ contract KapsulVoting {
         uint8 voteCount;
     }
 
+
+    event ProjectCreated(
+        uint8 indexed projectId,
+        string projectName,
+        address[] teamWallets
+    );
+
+    event VoteCasted(
+        address indexed voter,
+        uint8 indexed projectId,
+        uint8 newVoteCount
+    );
+
+    event ProjectUpdated(
+        uint8 indexed projectId,
+        string newProjectName,
+        address[] newTeamWallets
+    );
+
+    event WalletAddedToGroup(
+        address indexed wallet,
+        uint8 indexed projectId
+    );
+
     mapping(uint8 => Project) projectDetail;
     mapping(string => uint8) projectIDByName;
 
@@ -33,8 +57,9 @@ contract KapsulVoting {
 
         addToWalletGroup(projectIDCount, _teamWallets);
 
-        projectIDCount++;
+        emit ProjectCreated(projectIDCount, _projectName, _teamWallets);
 
+        projectIDCount++;
     }
 
     function addToWalletGroup(uint8 _projectIDCount, address[] memory _teamWallets) internal {
@@ -42,6 +67,9 @@ contract KapsulVoting {
         {
             require(walletGroup[_teamWallets[i]] == 0, "Wallet already added to a group");
             walletGroup[_teamWallets[i]] = _projectIDCount;
+            
+            //Her cüzdan eklendiğinde
+            emit WalletAddedToGroup(_teamWallets[i], _projectIDCount);
         }
     }
 
@@ -53,8 +81,10 @@ contract KapsulVoting {
         Project storage _project = projectDetail[_projectID];
 
         _project.voteCount++;
-
         isVoted[msg.sender] = true;
+
+        //Oy verildiğinde
+        emit VoteCasted(msg.sender, _projectID, _project.voteCount);
     }
 
     function updateProject(uint8 _id, string memory _newProjectName, address[] memory _newTeamWallets) public {
@@ -64,7 +94,11 @@ contract KapsulVoting {
 
         _newProject.projectName = _newProjectName;
         _newProject.teamWallets = _newTeamWallets;
+
+        //Proje güncellendiğinde
+        emit ProjectUpdated(_id, _newProjectName, _newTeamWallets);
     }
+
 
     function getWalletGroup(address _wallet) public view returns(uint8) {
         return walletGroup[_wallet];
